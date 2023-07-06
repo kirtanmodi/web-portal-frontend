@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Container, TextField, Button, Table, TableHead, TableBody, TableCell, TableRow } from '@mui/material';
+import { Container, TextField, Button, Table, TableHead, TableBody, TableCell, TableRow, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
-const API_URL = 'http://localhost:3000/data';
+const API_URL = 'http://localhost:11000/data';
 
 const App = () => {
   const [data, setData] = useState([]);
   const [formData, setFormData] = useState({ id: '', name: '', age: '', email: '', city: '' });
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -44,6 +45,33 @@ const App = () => {
       setData((prevData) => prevData.filter((item) => item.id !== id));
     } catch (error) {
       console.error('Error deleting data:', error);
+    }
+  };
+
+  const handleEditData = (id) => {
+    const itemToUpdate = data.find((item) => item.id === id);
+    if (!itemToUpdate) {
+      console.error('Item not found.');
+      return;
+    }
+    setFormData(itemToUpdate);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setFormData({ id: '', name: '', age: '', email: '', city: '' });
+  };
+
+  const handleUpdateData = async () => {
+    try {
+      const response = await axios.put(`${API_URL}/${formData.id}`, formData);
+      setData((prevData) =>
+        prevData.map((item) => (item.id === formData.id ? response.data : item))
+      );
+      handleClose();
+    } catch (error) {
+      console.error('Error updating data:', error);
     }
   };
 
@@ -126,11 +154,73 @@ const App = () => {
                 >
                   Delete
                 </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleEditData(item.id)}
+                >
+                  Edit
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Edit Data</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="ID"
+            name="id"
+            value={formData.id}
+            onChange={handleInputChange}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
+          <TextField
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
+          <TextField
+            label="Age"
+            name="age"
+            value={formData.age}
+            onChange={handleInputChange}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
+          <TextField
+            label="Email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
+          <TextField
+            label="City"
+            name="city"
+            value={formData.city}
+            onChange={handleInputChange}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleUpdateData} color="primary">Update</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
