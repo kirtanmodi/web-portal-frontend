@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Container, TextField, Button, Table, TableHead, TableBody, TableCell, TableRow, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Container, TextField, Button, Table, TableHead, TableBody, TableCell, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar } from '@mui/material';
 
 const API_URL = 'http://localhost:11000/data';
 
@@ -8,6 +8,8 @@ const App = () => {
   const [data, setData] = useState([]);
   const [formData, setFormData] = useState({ id: '', name: '', age: '', email: '', city: '' });
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -29,11 +31,17 @@ const App = () => {
     }));
   };
 
-  const handleAddData = async () => {
+  const handleAddData = async (e) => {
+    e.preventDefault();
     try {
       const response = await axios.post(API_URL, formData);
-      setData((prevData) => [...prevData, response.data]);
-      setFormData({ id: '', name: '', age: '', email: '', city: '' });
+      if (response.data === null) {
+        setError('User with the same ID already exists.');
+        setSnackbarOpen(true);
+      } else {
+        setData((prevData) => [...prevData, response.data]);
+        setFormData({ id: '', name: '', age: '', email: '', city: '' });
+      }
     } catch (error) {
       console.error('Error adding data:', error);
     }
@@ -73,6 +81,10 @@ const App = () => {
     } catch (error) {
       console.error('Error updating data:', error);
     }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -167,7 +179,8 @@ const App = () => {
         </TableBody>
       </Table>
 
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog
+        open={open} onClose={handleClose}>
         <DialogTitle>Edit Data</DialogTitle>
         <DialogContent>
           <TextField
@@ -221,6 +234,8 @@ const App = () => {
           <Button onClick={handleUpdateData} color="primary">Update</Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose} message={error} />
     </Container>
   );
 };
